@@ -81,6 +81,13 @@ public class Main {
       /* Figure out the next move */
       GameState output_state = player.play(input_state, deadline);
 
+      try {
+        Thread.sleep(10000);                
+      } catch(InterruptedException ex) {
+        Thread.currentThread().interrupt();
+      }
+
+
       /* Crash if deadline has been exceeded */
       if (deadline.timeUntil() < 0) {
         System.exit(152);
