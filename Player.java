@@ -219,14 +219,25 @@ public class Player {
         //return the difference between the chips of the current player and those of the opposite player
         int red_pieces = 0;
         int white_pieces = 0;
+        int red_kings = 0;
+        int white_kings = 0;
         int score = 0;
 
         // Count pieces
         for (int i = 0; i < pState.NUMBER_OF_SQUARES; i++) {
             if (0 != (pState.get(i) & Constants.CELL_RED)) {
                 ++red_pieces;
+
+                if (0 != (pState.get(i) & Constants.CELL_KING)){
+                    ++red_kings;
+                }
+
             } else if (0 != (pState.get(i) & Constants.CELL_WHITE)) {
                 ++white_pieces;
+
+                if (0 != (pState.get(i) & Constants.CELL_KING)) {
+                    ++white_kings;
+                }
             }
         }
 
@@ -235,9 +246,14 @@ public class Player {
         //if the player is white
         if (player == Constants.CELL_RED) {
             score = red_pieces - white_pieces;
+
+            //penalty if opponent gets a king
+            score -= white_kings * 100;
         }
         else {
-           score = white_pieces - red_pieces;
+            score = white_pieces - red_pieces;
+            //penalty if opponent gets a king
+            score -= red_kings * 100;
         }
 
         if (((pState.isRedWin()) && (player == Constants.CELL_RED)) || ((pState.isWhiteWin()) && (player == Constants.CELL_WHITE))){
