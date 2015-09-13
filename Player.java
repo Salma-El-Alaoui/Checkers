@@ -284,20 +284,49 @@ public class Player {
             }
         }
 
+        // Apply scorings
 
+        score = piecesLeader(score, player, red_pieces, white_pieces);
+        score = kingsLeader(score, player, red_kings, white_kings);
+        score = kingsPenalty(score, player, red_kings, white_kings);
+        score = endGame(score, player, pState);
+        score = offense(score, player, pState);
+        score = defenseOnSides(score, player, pState);
+        
+        return score;
 
-        //if the player is white
+    }
+
+    /*
+          heuristics
+     */
+    private static int piecesLeader(int score, int player, int red_pieces, int white_pieces){
+
+        //if the player is red
         if (player == Constants.CELL_RED) {
-            score = red_pieces - white_pieces;
-
-            //penalty if opponent gets a king
-            score -= white_kings * 100;
+            score += (red_pieces - white_pieces);
         }
         else {
-            score = white_pieces - red_pieces;
-            //penalty if opponent gets a king
-            score -= red_kings * 100;
+            score += (white_pieces - red_pieces);
         }
+        return score;
+    }
+
+    // kattis +2 score
+    private static int kingsPenalty(int score, int player, int red_kings, int white_kings){
+
+        //if the player is red
+        if (player == Constants.CELL_RED) {
+                //penalty if opponent gets a king
+                score -= white_kings * 100;
+        }
+        else {
+                score -= red_kings * 100;
+        }
+        return score;
+    }
+
+    private static int endGame(int score, int player, GameState pState){
 
         if (((pState.isRedWin()) && (player == Constants.CELL_RED)) || ((pState.isWhiteWin()) && (player == Constants.CELL_WHITE))){
             score += 2000;
@@ -306,12 +335,100 @@ public class Player {
             score -= 2000;
         }
         else if (pState.isDraw()) {
-            score -= 5000;
+            score -= 1000;
         }
+        return score;
+    }
 
+    private static int kingsLeader(int score, int player, int red_kings, int white_kings){
+
+        //if the player is red
+        if (player == Constants.CELL_RED) {
+            score += (red_kings - white_kings) * 2;
+        }
+        else {
+            score += (white_kings - red_kings) * 2;
+        }
         return score;
 
     }
+
+    // kattis -1 score
+    private static int offense(int score, int player, GameState pState){
+
+        int advanced_red_pieces = 0;
+        int advanced_white_pieces = 0;
+
+        // count advanced pieces
+        for (int i = pState.NUMBER_OF_SQUARES -1; i > 19 ; i--) {
+            if (0 != (pState.get(i) & Constants.CELL_RED)) {
+                ++advanced_red_pieces;
+            }
+        }
+        for (int i = 0; i < 12; i++) {
+            if (0 != (pState.get(i) & Constants.CELL_WHITE)) {
+                ++advanced_white_pieces;
+            }
+        }
+
+        //if the player is red
+        if (player == Constants.CELL_RED) {
+            score += advanced_red_pieces * 2;
+        }
+        else {
+            score += score += advanced_white_pieces * 2;
+        }
+        return score;
+    }
+
+    // kattis +1 score
+    private static int defenseOnSides(int score, int player, GameState pState){
+
+        int red_pieces_on_side = 0;
+        int white_pieces_on_side = 0;
+
+        // count pieces on sides
+        int l = 0;
+        int r = 3;
+        for (int i = 0; i < 5; i++) {
+
+            // left side
+            if ( 0 != (pState.get(l) & Constants.CELL_RED) ) {
+                ++red_pieces_on_side;
+
+            }else if( 0 != (pState.get(l) & Constants.CELL_WHITE) ){
+                ++white_pieces_on_side;
+            }
+
+            // right side
+            if ( 0 != (pState.get(r) & Constants.CELL_RED) ) {
+                ++red_pieces_on_side;
+
+            }else if( 0 != (pState.get(r) & Constants.CELL_WHITE) ){
+                ++white_pieces_on_side;
+            }
+
+            l += 8;
+            if( l == 8){ l = 4; }
+            // catch special cases from upper left und lower right corner...
+            r += 8;
+            if( r > 31){ r = 31; }
+        }
+
+
+        //if the player is red
+        if (player == Constants.CELL_RED) {
+            score += (red_pieces_on_side - white_pieces_on_side);
+        }
+        else {
+            score += (white_pieces_on_side - red_pieces_on_side);
+        }
+
+        return score;
+    }
+
+
+
 
      
 
