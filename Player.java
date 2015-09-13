@@ -11,8 +11,16 @@ public class Player {
      * @return the next state the board is in after our move
      */
 
+    private Deadline mPDue;
+    private static final long SECOND = 1000000000L;
+    private static final long HUNDRED_MILLIS = 100000000L;
+    private static final long MILLIS = 1000000L;
+    private int mNodes = -1;
+    private int mPruned = -1;
 
     public GameState play(final GameState pState, final Deadline pDue) {
+
+        mPDue = pDue;
 
         Vector<GameState> lNextStates = new Vector<GameState>();
         pState.findPossibleMoves(lNextStates);
@@ -26,9 +34,9 @@ public class Player {
         return best;
     }
 
-
-
     public GameState playRandom(final GameState pState, final Deadline pDue) {
+
+        mPDue = pDue;
 
         Vector<GameState> lNextStates = new Vector<GameState>();
         pState.findPossibleMoves(lNextStates);
@@ -39,10 +47,15 @@ public class Player {
         }
 
         Random random = new Random();
-        return lNextStates.elementAt(random.nextInt(lNextStates.size()));
+        GameState best = lNextStates.elementAt(random.nextInt(lNextStates.size()));
+
+        return best;
     }
 
     public GameState playMiniMax(final GameState pState, final Deadline pDue) {
+
+        mPDue = pDue;
+        mNodes = 0;
 
         Vector<GameState> lNextStates = new Vector<GameState>();
         pState.findPossibleMoves(lNextStates);
@@ -52,12 +65,19 @@ public class Player {
             return new GameState(pState, new Move());
         }
 
-        GameState best = bestMoveMiniMax(pState, 5);
+        GameState best = bestMoveMiniMax(pState, 7);
+
+        System.err.println("Total nodes expanded: " + mNodes);
+        printTimeLeft();
         return best;
     }
 
     public GameState playAlphaBeta(final GameState pState, final Deadline pDue) {
 
+        mPDue = pDue;
+        mNodes = 0;
+        mPruned = 0;
+
         Vector<GameState> lNextStates = new Vector<GameState>();
         pState.findPossibleMoves(lNextStates);
 
@@ -66,7 +86,10 @@ public class Player {
             return new GameState(pState, new Move());
         }
 
-        GameState best = bestMoveAlphaBeta(pState, 11);
+        GameState best = bestMoveAlphaBeta(pState, 9);
+
+        System.err.println("Total nodes expanded: " + mNodes + " Pruned N-times: " + mPruned);
+        printTimeLeft();
         return best;
     }
 
@@ -75,6 +98,28 @@ public class Player {
 =========================================Private=========================================
 =========================================================================================
 */
+
+    /**
+     *  print timeleft for debug
+     */
+    private void printTimeLeft(){
+
+        float timeLeft = mPDue.timeUntil()/ 1000000f;
+        System.err.println("Time left in ms: " + timeLeft);
+
+    }
+
+    private boolean isTimeleft(long atLeast){
+
+        if( mPDue.timeUntil() <= atLeast){
+//            printTimeLeft();
+            return false;
+        }
+        return true;
+
+    }
+
+
     private GameState bestMoveAlphaBeta(GameState pState, int depth){
 
         Vector<GameState> nextStates = new Vector<GameState>();
@@ -87,14 +132,18 @@ public class Player {
         int player = pState.getNextPlayer();
         GameState state = nextStates.elementAt(0);
         alpha = alphaBeta(nextStates.elementAt(0), player, depth -1, false, alpha, beta);
+        mNodes++;
 
         for(int i = 1; i < nextStates.size(); i++){
+
+                    mNodes++;
                     int nextStateScore = alphaBeta(nextStates.elementAt(i), player, depth -1, false, alpha, beta);
                     if(nextStateScore > alpha) {
                         alpha = nextStateScore;
                         state = nextStates.elementAt(i);
                     }
                     if(beta <= alpha) {
+                        mPruned++;
                         break;
                     }
         }
@@ -116,11 +165,13 @@ public class Player {
             if(max) {
 
                 for(int i = 0; i < nextStates.size(); i++){
+                    mNodes++;
                     int nextStateScore = alphaBeta(nextStates.elementAt(i), player, depth -1, !max, alpha, beta);
                     if(nextStateScore >= alpha){
                         alpha = nextStateScore;
                     }
                     if(beta <= alpha) {
+                        mPruned++;
                         break;
                     }
 
@@ -129,11 +180,13 @@ public class Player {
             }
             else {
                 for(int i = 0; i < nextStates.size(); i++){
+                    mNodes++;
                     int nextStateScore = alphaBeta(nextStates.elementAt(i), player, depth -1, !max, alpha, beta);
                     if(nextStateScore <= beta){
                         beta = nextStateScore;
                     }
                     if(beta <= alpha) {
+                        mPruned++;
                         break;
                     }
                 }
@@ -151,8 +204,13 @@ public class Player {
         int player = pState.getNextPlayer();
         int score = miniMax(nextStates.elementAt(0), player, depth -1, false);
         GameState state = nextStates.elementAt(0);
+        mNodes++;
 
         for(int i = 1; i < nextStates.size(); i++){
+//                    if(!isTimeleft(2*HUNDRED_MILLIS)){
+//                        return state;
+//                    }
+                    mNodes++;
                     int nextStateScore = miniMax(nextStates.elementAt(i), player, depth -1, false);
                     if(nextStateScore >= score) {
                         score = nextStateScore;
@@ -165,9 +223,10 @@ public class Player {
 
     private int miniMax(GameState pState, int player, int depth, boolean max) {
 
-        if(depth == 0 || pState.isEOG()) {
+        if(depth == 0 || pState.isEOG()  ) { // || !isTimeleft(HUNDRED_MILLIS)
             return eval(pState, player);
         }
+
         else {
            
             Vector<GameState> nextStates = new Vector<GameState>();
@@ -176,6 +235,7 @@ public class Player {
             if(max) {
                 int score = Integer.MIN_VALUE;
                 for(int i = 0; i < nextStates.size(); i++){
+                    mNodes++;
                     int nextStateScore = miniMax(nextStates.elementAt(i), player, depth -1, !max);
                     if(nextStateScore >= score){
                         score = nextStateScore;
@@ -186,6 +246,7 @@ public class Player {
             else {
                 int score = Integer.MAX_VALUE;
                 for(int i = 0; i < nextStates.size(); i++){
+                    mNodes++;
                     int nextStateScore = miniMax(nextStates.elementAt(i), player, depth -1, !max);
                     if(nextStateScore < score){
                         score = nextStateScore;
@@ -245,7 +306,7 @@ public class Player {
             score -= 2000;
         }
         else if (pState.isDraw()) {
-            score -= 1000;
+            score -= 5000;
         }
 
         return score;
