@@ -22,10 +22,6 @@ public class Player {
             return new GameState(pState, new Move());
         }
 
-        /**
-         * Here you should write your algorithms to get the best next move, i.e.
-         * the best next state. This skeleton returns a random move instead.
-         */
         GameState best = bestMoveAlphaBeta(pState, 9);
         return best;
     }
@@ -42,10 +38,6 @@ public class Player {
             return new GameState(pState, new Move());
         }
 
-        /**
-         * Here you should write your algorithms to get the best next move, i.e.
-         * the best next state. This skeleton returns a random move instead.
-         */
         Random random = new Random();
         return lNextStates.elementAt(random.nextInt(lNextStates.size()));
     }
@@ -60,11 +52,6 @@ public class Player {
             return new GameState(pState, new Move());
         }
 
-        /**
-         * Here you should write your algorithms to get the best next move, i.e.
-         * the best next state. This skeleton returns a random move instead.
-         */
-
         GameState best = bestMoveMiniMax(pState, 5);
         return best;
     }
@@ -78,11 +65,6 @@ public class Player {
             // Must play "pass" move if there are no other moves possible.
             return new GameState(pState, new Move());
         }
-
-        /**
-         * Here you should write your algorithms to get the best next move, i.e.
-         * the best next state. This skeleton returns a random move instead.
-         */
 
         GameState best = bestMoveAlphaBeta(pState, 11);
         return best;
