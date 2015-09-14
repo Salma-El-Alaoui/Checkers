@@ -86,7 +86,7 @@ public class Player {
             return new GameState(pState, new Move());
         }
 
-        GameState best = bestMoveAlphaBeta(pState, 9);
+        GameState best = bestMoveAlphaBeta(pState, 10);
 
         System.err.println("Total nodes expanded: " + mNodes + " Pruned N-times: " + mPruned);
         printTimeLeft();
@@ -292,6 +292,7 @@ public class Player {
         score = endGame(score, player, pState);
         score = offense(score, player, pState);
         score = defenseOnSides(score, player, pState);
+        score = defense(score, player, pState);
         
         return score;
 
@@ -425,6 +426,70 @@ public class Player {
         }
 
         return score;
+    }
+
+    private static int defense(int score, int player, GameState pState){
+
+        int unprotected_red_pieces = 0;
+        int unprotected_white_pieces = 0;
+
+        // fields in rows without edge fields
+        int [] leftShiftedRows =  {5,6,7,13,14,15,21,22,23};  // calc: (field +/- fieldsInRow) - 1
+        int [] rightShiftedRows = {8,9,10,16,17,18,24,25,26}; // calc: (field +/- fieldsInRow) + 1
+        int fieldsInRow = 4;
+
+        /*
+            Count unprotected pieces
+         */
+        for( int i : leftShiftedRows){ // calc: (field +/- fieldsInRow) - 1
+
+            if ( 0 != (pState.get(i) & Constants.CELL_RED) ) // calc with - 4 ( fieldsInRow ) if RED
+            {
+                if( !(0 != (pState.get(i - fieldsInRow) & Constants.CELL_RED)) || !(0 != (pState.get(i - fieldsInRow - 1 ) & Constants.CELL_RED)) ){
+                    ++unprotected_red_pieces;
+                }
+            }
+            if ( 0 != (pState.get(i) & Constants.CELL_WHITE) ) // calc with + 4 ( fieldsInRow ) if WHITE
+            {
+                if( !(0 != (pState.get(i + fieldsInRow) & Constants.CELL_WHITE)) || !(0 != (pState.get(i + fieldsInRow - 1 ) & Constants.CELL_WHITE)) ){
+                    ++unprotected_white_pieces;
+                }
+            }
+        }
+
+        for( int i : rightShiftedRows){ // calc: (field +/- fieldsInRow) + 1
+
+            if ( 0 != (pState.get(i) & Constants.CELL_RED) )
+            {
+                if( !(0 != (pState.get(i - fieldsInRow) & Constants.CELL_RED)) || !(0 != (pState.get(i - fieldsInRow  + 1 ) & Constants.CELL_RED)) ){
+                    ++unprotected_red_pieces;
+                }
+            }
+            if ( 0 != (pState.get(i) & Constants.CELL_WHITE) )
+            {
+                if( !(0 != (pState.get(i + fieldsInRow) & Constants.CELL_WHITE)) || !(0 != (pState.get(i + fieldsInRow  + 1 ) & Constants.CELL_WHITE)) ){
+                    ++unprotected_white_pieces;
+                }
+            }
+        }
+
+//        System.err.println("unpro-RED: " + unprotected_red_pieces + "  unpro-WHITE: " + unprotected_white_pieces +" ");
+
+        /*
+            score
+         */
+
+        //if the player is red
+        if (player == Constants.CELL_RED) {
+            score += (unprotected_white_pieces - unprotected_red_pieces);
+        }
+        else {
+            score += (unprotected_red_pieces - unprotected_white_pieces);
+        }
+
+        return score;
+
+
     }
 
 
